@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trascendiendo Fronteras - Carpeta Virtual</title>
 
-  <!-- CONFIGURACIÓN PARA QUE SE PUEDA INSTALAR EN EL CELULAR SIN INTERNET -->
+  <!-- CONFIGURACIÓN PWA OFFLINE -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a192f">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -322,7 +322,8 @@
       <div class="section-title">Documentos de Identidad</div>
       <div class="docs-list">
 
-        <button class="doc-item" onclick="abrirVisor('Cédula de Ciudadanía', 'cedula.jpg')">
+        <!-- Cédula (Obligatoria) -->
+        <button id="btnCedula" class="doc-item" onclick="abrirVisor('Cédula de Ciudadanía', 'cedula.jpg')">
           <div class="doc-left">
             <span>🪪</span>
             <span>Cédula de Ciudadanía</span>
@@ -331,9 +332,10 @@
           <span class="doc-arrow">›</span>
         </button>
 
-        <button class="doc-item" onclick="abrirVisor('Pasaporte Vigente', 'pasaporte.jpg')">
+        <!-- Pasaporte (Opcional según DOCUMENTOS_ACTIVOS) -->
+        <button id="btnPasaporte" class="doc-item" onclick="abrirVisor('Pasaporte Vigente', 'pasaporte.jpg')">
           <div class="doc-left">
-            <span>✈️️</span>
+            <span>✈</span>
             <span>Pasaporte Oficial</span>
             <span class="badge-tipo badge-img">FOTO</span>
           </div>
@@ -346,7 +348,7 @@
       <div class="section-title" id="secParticipacionesTitulo">Participaciones</div>
       <div class="docs-list">
 
-        <!-- Cuadernillo Vouchers -->
+        <!-- Vouchers -->
         <a id="btnVouchers" href="vouchers.pdf" target="_blank" class="doc-item">
           <div class="doc-left">
             <span>🧾</span>
@@ -356,7 +358,7 @@
           <span class="doc-arrow">›</span>
         </a>
 
-        <!-- Cuadernillo Contrarecibos -->
+        <!-- Contrarecibos -->
         <a id="btnContrarecibos" href="contrarecibos.pdf" target="_blank" class="doc-item">
           <div class="doc-left">
             <span>📑</span>
@@ -366,7 +368,7 @@
           <span class="doc-arrow">›</span>
         </a>
 
-        <!-- Cuadernillo Contratos (Opcional) -->
+        <!-- Contratos -->
         <a id="btnContratos" href="contratos.pdf" target="_blank" class="doc-item">
           <div class="doc-left">
             <span>✒️</span>
@@ -450,11 +452,15 @@
   // PIN de seguridad
   const PIN_SISTEMA = "1234";
 
-  // CONFIGURACIÓN DE VISIBILIDAD (true: visible, false: oculto)
+  // ==============================================================
+  // CONFIGURACIÓN DE VISIBILIDAD DE DOCUMENTOS PARA ESTE TITULAR
+  // (Pon 'true' si lo tiene o 'false' si no lo tiene)
+  // ==============================================================
   const DOCUMENTOS_ACTIVOS = {
-    tieneVouchers: true,
-    tieneContrarecibos: true,
-    tieneContratos: false
+    tienePasaporte: false,     // <-- Si es false, no aparece pasaporte ni en pantalla ni en reporte
+    tieneVouchers: true,      // <-- Si es false, no aparece vouchers
+    tieneContrarecibos: false, // <-- Si es false, no aparece contrarecibos
+    tieneContratos: false      // <-- Si es false, no aparece contratos
   };
 
   // DATOS DEL TITULAR
@@ -466,6 +472,13 @@
   };
 
   function aplicarConfiguracionDocumentos() {
+    // Control de Pasaporte
+    const elPasaporte = document.getElementById("btnPasaporte");
+    if (elPasaporte && !DOCUMENTOS_ACTIVOS.tienePasaporte) {
+      elPasaporte.classList.add("hidden");
+    }
+
+    // Control de Participaciones
     const elVouchers = document.getElementById("btnVouchers");
     const elContrarecibos = document.getElementById("btnContrarecibos");
     const elContratos = document.getElementById("btnContratos");
@@ -475,6 +488,7 @@
     if (elContrarecibos && !DOCUMENTOS_ACTIVOS.tieneContrarecibos) elContrarecibos.classList.add("hidden");
     if (elContratos && !DOCUMENTOS_ACTIVOS.tieneContratos) elContratos.classList.add("hidden");
 
+    // Si no tiene ninguno de los 3 documentos de participación, oculta el título entero
     if (elTitulo && !DOCUMENTOS_ACTIVOS.tieneVouchers && !DOCUMENTOS_ACTIVOS.tieneContrarecibos && !DOCUMENTOS_ACTIVOS.tieneContratos) {
       elTitulo.classList.add("hidden");
     }
@@ -533,9 +547,10 @@
     const rutaBase = window.location.href.split('?')[0].split('#')[0];
     const urlBase = rutaBase.substring(0, rutaBase.lastIndexOf('/') + 1);
 
+    // Lista evaluada con los permisos de DOCUMENTOS_ACTIVOS
     const listaDocumentos = [
       { nombre: "Cédula de Ciudadanía (Soporte biométrico)", archivo: "cedula.jpg", tipo: "IMAGEN", visible: true },
-      { nombre: "Pasaporte Oficial Vigente", archivo: "pasaporte.jpg", tipo: "IMAGEN", visible: true },
+      { nombre: "Pasaporte Oficial Vigente", archivo: "pasaporte.jpg", tipo: "IMAGEN", visible: DOCUMENTOS_ACTIVOS.tienePasaporte },
       { nombre: "Vouchers de Participación", archivo: "vouchers.pdf", tipo: "PDF", visible: DOCUMENTOS_ACTIVOS.tieneVouchers },
       { nombre: "Contrarecibos", archivo: "contrarecibos.pdf", tipo: "PDF", visible: DOCUMENTOS_ACTIVOS.tieneContrarecibos },
       { nombre: "Contratos", archivo: "contratos.pdf", tipo: "PDF", visible: DOCUMENTOS_ACTIVOS.tieneContratos },
@@ -602,7 +617,7 @@
       </head>
       <body>
         <div class="top-bar">
-          <span class="top-bar-title">📄 REPORTE DE PARTICIPACIONES</span>
+          <span class="top-bar-title">📄 REPORTE DE EXPEDIENTE</span>
           <button class="btn-save-pdf" onclick="window.print()">📥 Descargar Reporte en PDF</button>
         </div>
         <div class="paper">
